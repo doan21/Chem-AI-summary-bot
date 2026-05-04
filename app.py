@@ -43,13 +43,13 @@ def call_ai(notes_text):
             )
 
             data = response.json()
-            print(data)
+            print('RESPONSE:', data)
 
             if 'choices' not in data:
                 raise Exception(f"API error: {data}")
 
             content = data['choices'][0]['message']['content']
-
+            print('CONTENT:', content)
             # Parse JSON from response
             try:
                 result = json.loads(content)
