@@ -220,7 +220,7 @@
         let response;
         if (activeTab === 'text') {
           const text = document.getElementById('notesText').value.trim();
-          response = await fetch('http://localhost:5000/analyse', {
+          response = await fetch('https://chem-ai-summary-bot.onrender.com/analyse', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text })
@@ -228,7 +228,7 @@
         } else {
           const formData = new FormData();
           formData.append('pdf', selectedFile);
-          response = await fetch('http://localhost:5000/analyse-pdf', {
+          response = await fetch('https://chem-ai-summary-bot.onrender.com/analyse-pdf', {
             method: 'POST',
             body: formData
           });
