@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chem Notes AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1e;
+      --surface: #111827;
+      --border: #1e2d45;
+      --accent: #00e5ff;
+      --accent2: #7c3aed;
+      --accent3: #10b981;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --danger: #f43f5e;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-orb { position: fixed; width: 600px; height: 600px; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+    .orb1 { background: rgba(0,229,255,0.06); top: -200px; left: -100px; }
+    .orb2 { background: rgba(124,58,237,0.06); bottom: -200px; right: -100px; }
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; position: relative; z-index: 1; }
+    header { text-align: center; margin-bottom: 50px; animation: fadeDown 0.8s ease; }
+    .tag { display: inline-block; background: rgba(0,229,255,0.1); border: 1px solid rgba(0,229,255,0.3); color: var(--accent); font-size: 11px; letter-spacing: 3px; padding: 6px 16px; border-radius: 2px; text-transform: uppercase; margin-bottom: 20px; }
+    h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px, 6vw, 64px); font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+    h1 span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .subtitle { color: var(--muted); font-size: 14px; letter-spacing: 1px; }
+    .input-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px; animation: fadeUp 0.8s ease 0.2s both; }
+    .section-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 8px; width: fit-content; }
+    .tab { padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 12px; letter-spacing: 1px; color: var(--muted); transition: all 0.2s; font-family: 'DM Mono', monospace; border: none; background: transparent; }
+    .tab.active { background: var(--accent); color: #000; font-weight: 500; }
+    textarea { width: 100%; min-height: 200px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; padding: 16px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; line-height: 1.8; resize: vertical; outline: none; transition: border-color 0.2s; }
+    textarea:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--muted); }
+    .upload-area { border: 2px dashed var(--border); border-radius: 8px; padding: 50px 20px; text-align: center; cursor: pointer; transition: all 0.3s; position: relative; }
+    .upload-area:hover, .upload-area.dragover { border-color: var(--accent); background: rgba(0,229,255,0.03); }
+    .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon { font-size: 40px; margin-bottom: 12px; }
+    .upload-text { color: var(--muted); font-size: 13px; line-height: 1.8; }
+    .upload-text strong { color: var(--accent); }
+    .file-selected { display: none; align-items: center; gap: 12px; background: rgba(0,229,255,0.05); border: 1px solid rgba(0,229,255,0.2); border-radius: 8px; padding: 12px 16px; margin-top: 12px; }
+    .file-selected.show { display: flex; }
+    .file-name { font-size: 13px; color: var(--accent); flex: 1; }
+    .file-remove { color: var(--danger); cursor: pointer; font-size: 18px; }
+    .submit-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; border-radius: 8px; color: #fff; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; margin-top: 24px; transition: all 0.3s; }
+    .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,255,0.2); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .loading { display: none; text-align: center; padding: 40px; }
+    .loading.show { display: block; }
+    .spinner { width: 40px; height: 40px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    .loading-text { color: var(--muted); font-size: 12px; letter-spacing: 2px; }
+    .results { display: none; animation: fadeUp 0.6s ease; }
+    .results.show { display: block; }
+    .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; margin-bottom: 16px; }
+    .result-card.summary { border-left: 3px solid var(--accent); }
+    .result-card.keypoints { border-left: 3px solid var(--accent2); }
+    .result-card.questions { border-left: 3px solid var(--accent3); }
+    .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .card-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .summary .card-icon { background: rgba(0,229,255,0.1); }
+    .keypoints .card-icon { background: rgba(124,58,237,0.1); }
+    .questions .card-icon { background: rgba(16,185,129,0.1); }
+    .card-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    .summary .card-title { color: var(--accent); }
+    .keypoints .card-title { color: var(--accent2); }
+    .questions .card-title { color: var(--accent3); }
+    .card-content { font-size: 13px; line-height: 2; color: #94a3b8; white-space: pre-wrap; }
+    .reset-btn { background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 1px; padding: 10px 20px; cursor: pointer; margin-top: 8px; transition: all 0.2s; display: block; margin-left: auto; }
+    .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="glow-orb orb1"></div>
+  <div class="glow-orb orb2"></div>
+  <div class="container">
+    <header>
+      <div class="tag">O Level • Chemistry • AI</div>
+      <h1>Study <span>Smarter</span><br>Not Harder</h1>
+      <p class="subtitle">// paste your notes or upload a PDF — AI does the rest</p>
+    </header>
+
+    <div class="input-section" id="inputSection">
+      <div class="section-label">Input your notes</div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('text', this)">✏️ Type / Paste</button>
+        <button class="tab" onclick="switchTab('pdf', this)">📄 Upload PDF</button>
+      </div>
+
+      <div id="textInput">
+        <textarea id="notesText" placeholder="Paste your chemistry notes here...&#10;&#10;e.g. Covalent bonds are formed when two atoms share electrons..."></textarea>
+      </div>
+
+      <div id="pdfInput" class="hidden">
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="pdfFile" accept=".pdf" onchange="handleFileSelect(this)">
+          <div class="upload-icon">📂</div>
+          <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br>PDF files only</div>
+        </div>
+        <div class="file-selected" id="fileSelected">
+          <span>📄</span>
+          <span class="file-name" id="fileName"></span>
+          <span class="file-remove" onclick="removeFile()">✕</span>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="analyse()">⚗️ &nbsp; Analyse Notes</button>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Analysing your chemistry notes...</div>
+    </div>
+
+    <div class="results" id="results">
+      <div class="result-card summary">
+        <div class="card-header">
+          <div class="card-icon">📝</div>
+          <div class="card-title">Summary</div>
+        </div>
+        <div class="card-content" id="summaryContent"></div>
+      </div>
+      <div class="result-card keypoints">
+        <div class="card-header">
+          <div class="card-icon">🔑</div>
+          <div class="card-title">Key Points</div>
+        </div>
+        <div class="card-content" id="keypointsContent"></div>
+      </div>
+      <div class="result-card questions">
+        <div class="card-header">
+          <div class="card-icon">❓</div>
+          <div class="card-title">Practice Questions</div>
+        </div>
+        <div class="card-content" id="questionsContent"></div>
+      </div>
+      <button class="reset-btn" onclick="reset()">↩ Analyse new notes</button>
+    </div>
+  </div>
+
+  <script>
+    let activeTab = 'text';
+    let selectedFile = null;
+
+    function switchTab(tab, el) {
+      activeTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('textInput').classList.toggle('hidden', tab !== 'text');
+      document.getElementById('pdfInput').classList.toggle('hidden', tab !== 'pdf');
+    }
+
+    function handleFileSelect(input) {
+      const file = input.files[0];
+      if (!file) return;
+      selectedFile = file;
+      document.getElementById('fileName').textContent = file.name;
+      document.getElementById('fileSelected').classList.add('show');
+    }
+
+    function removeFile() {
+      selectedFile = null;
+      document.getElementById('pdfFile').value = '';
+      document.getElementById('fileSelected').classList.remove('show');
+    }
+
+    const uploadArea = document.getElementById('uploadArea');
+    uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+    uploadArea.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        selectedFile = file;
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSelected').classList.add('show');
+      }
+    });
+
+    async function analyse() {
+      const btn = document.getElementById('submitBtn');
+      if (activeTab === 'text') {
+        const text = document.getElementById('notesText').value.trim();
+        if (!text) return alert('Please paste your notes first!');
+      } else {
+        if (!selectedFile) return alert('Please upload a PDF first!');
+      }
+
+      btn.disabled = true;
+      document.getElementById('inputSection').style.display = 'none';
+      document.getElementById('loading').classList.add('show');
+
+      try {
+        let response;
+        if (activeTab === 'text') {
+          const text = document.getElementById('notesText').value.trim();
+          response = await fetch('http://localhost:5000/analyse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+          });
+        } else {
+          const formData = new FormData();
+          formData.append('pdf', selectedFile);
+          response = await fetch('http://localhost:5000/analyse-pdf', {
+            method: 'POST',
+            body: formData
+          });
+        }
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+
+        document.getElementById('summaryContent').textContent = data.summary;
+        document.getElementById('keypointsContent').textContent = data.keypoints;
+        document.getElementById('questionsContent').textContent = data.questions;
+
+        document.getElementById('loading').classList.remove('show');
+        document.getElementById('results').classList.add('show');
+      } catch (err) {
+        document.getElementById('loading').classList.remove('show');
+        document.getElementById('inputSection').style.display = 'block';
+        btn.disabled = false;
+        alert('Error: ' + err.message);
+      }
+    }
+
+    function reset() {
+      document.getElementById('results').classList.remove('show');
+      document.getElementById('inputSection').style.display = 'block';
+      document.getElementById('notesText').value = '';
+      removeFile();
+      document.getElementById('submitBtn').disabled = false;
+    }
+  </script>
+</body>
+</html>
